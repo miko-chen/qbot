@@ -1,0 +1,22 @@
+package org.jeecg.modules.bot.ws.service.impl.groupEvent;
+
+import com.alibaba.fastjson.JSONObject;
+import org.jeecg.modules.bot.ws.service.BotMessageService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+/**
+ * @author miko
+ * @version 0.1
+ * @date 2022/9/8 18:30
+ *
+ * 群成员被禁言事件（该成员不是Bot）
+ */
+@Service("MemberMuteEvent")
+@Slf4j
+public class MemberMuteEventServiceImpl implements BotMessageService {
+    @Override
+    public void onMessage(JSONObject data) {
+        log.info("【事件】群成员被禁言事件 : {}",data);
+    }
+}
