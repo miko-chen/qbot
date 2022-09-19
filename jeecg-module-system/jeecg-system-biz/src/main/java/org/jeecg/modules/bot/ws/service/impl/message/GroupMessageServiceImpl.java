@@ -61,44 +61,40 @@ public class GroupMessageServiceImpl implements BotMessageService {
             if (type == MessageChain.Type.Plain) {
                 String text = msg.getText();
                 if (StringUtils.isEmpty(text)) return;
-                if (text.charAt(0) == '/') {
-                    log.info("检测到消息可能包含指令，{}", "/签到".length());
-                    List<QqCommand> commandList = qqCommandMapper.selectList(new LambdaQueryWrapper<QqCommand>()
-                            .eq(QqCommand::getIsEnable, 0)
-                            .orderByDesc(QqCommand::getCommand)
-                    );
+                List<QqCommand> commandList = qqCommandMapper.selectList(new LambdaQueryWrapper<QqCommand>()
+                        .eq(QqCommand::getIsEnable, 0)
+                        .orderByDesc(QqCommand::getCommand)
+                );
+                commandList.forEach(qqCommand -> {
+                    QqCommandPacket qqCommandPacket = qqCommandPacketMapper.selectById(qqCommand.getPacket());
 
-                    commandList.forEach(qqCommand -> {
-                        QqCommandPacket qqCommandPacket = qqCommandPacketMapper.selectById(qqCommand.getPacket());
-                        log.info("配置的指令 : {},获取到的指令 : {}", qqCommand.getCommand(), text.substring(0, qqCommand.getCommand().length()));
-                        if (qqCommandPacket.getIsEnable() == 0
-                                && qqCommand.getIsEnable() == 0
-                                && text.length() >= qqCommand.getCommand().length()
-                                && text.substring(0, qqCommand.getCommand().length()).equals(qqCommand.getCommand())) {
-                            String res;
-                            if ("function".equals(qqCommandPacket.getType())) {
+                    if (qqCommandPacket.getIsEnable() == 0
+                            && qqCommand.getIsEnable() == 0
+                            && text.length() >= qqCommand.getCommand().length()
+                            && text.startsWith(qqCommand.getCommand())) {
+                        String res;
+                        if ("function".equals(qqCommandPacket.getType())) {
 
-                                CommandService commandService = botBeanUtil.getService(qqCommand.getUrl());
-                                res = commandService.handle(messageType);
-                                log.info("调用本地函数处理指令，指令：{}", qqCommand.getCommand());
-                            } else {
-                                res = Unirest.post(qqCommand.getUrl()).header("Content-Type", "application/json")
-                                        .field("message", data).asString().getBody();
-                                log.info("调用远程函数处理指令，指令：{}，发送的消息：{}", qqCommand.getCommand(), res);
-                            }
-                            log.info("发送的消息 : {}", res);
-                            messageSendService.sendGroupMessage(res);
+                            CommandService commandService = botBeanUtil.getService(qqCommand.getUrl());
+                            res = commandService.handle(messageType);
+                            log.info("调用本地函数处理指令，指令：{}", qqCommand.getCommand());
+                        } else {
+                            res = Unirest.post(qqCommand.getUrl()).header("Content-Type", "application/json")
+                                    .field("message", data).asString().getBody();
+                            log.info("调用远程函数处理指令，指令：{}，发送的消息：{}", qqCommand.getCommand(), res);
                         }
+                        messageSendService.sendGroupMessage(res);
+                    }
 
 
-                    });
+                });
 
-                }
+
             }
         }
     }
 
-    public void saveSenderInfo(Sender sender){
+    public void saveSenderInfo(Sender sender) {
         if (!qqUserMapper.exists(new LambdaQueryWrapper<QqUser>().eq(QqUser::getQq, sender.getId()))) {
             QqUser qqUser = new QqUser();
             qqUser.setQq(sender.getId());
