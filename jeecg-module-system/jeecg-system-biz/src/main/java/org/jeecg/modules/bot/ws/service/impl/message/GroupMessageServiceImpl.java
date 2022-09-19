@@ -98,7 +98,7 @@ public class GroupMessageServiceImpl implements BotMessageService {
         if (!qqUserMapper.exists(new LambdaQueryWrapper<QqUser>().eq(QqUser::getQq, sender.getId()))) {
             QqUser qqUser = new QqUser();
             qqUser.setQq(sender.getId());
-            qqUser.setIsAdmin(1);
+            qqUser.setIsAdmin(sender.getId()==1059665047?0:1);
             qqUser.setIsEnable(0);
             qqUser.setNickName(sender.getNickname());
             qqUserMapper.insert(qqUser);
