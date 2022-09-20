@@ -46,6 +46,10 @@ public class QqCommand implements Serializable {
 	/**分组*/
     @ApiModelProperty(value = "分组")
     private java.lang.String packet;
+    /**是否管理员指令*/
+    @Excel(name = "是否管理员指令", width = 15)
+    @ApiModelProperty(value = "是否管理员指令")
+    private java.lang.Integer isAdmin;
 	/**创建人*/
     @ApiModelProperty(value = "创建人")
     private java.lang.String createBy;

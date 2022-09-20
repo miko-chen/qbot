@@ -79,6 +79,10 @@ public class QqGroup implements Serializable {
 	@Excel(name = "余额", width = 15)
     @ApiModelProperty(value = "余额")
     private java.lang.String balance;
+	/**权限*/
+	@Excel(name = "权限", width = 15)
+    @ApiModelProperty(value = "权限")
+    private java.lang.String permission;
 	/**创建人*/
     @ApiModelProperty(value = "创建人")
     private java.lang.String createBy;

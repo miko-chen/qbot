@@ -2,9 +2,9 @@ package org.jeecg.modules.bot.ws.service.impl.message;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import kong.unirest.HttpResponse;
+
 import kong.unirest.Unirest;
-import org.jeecg.modules.bot.common.entity.FriendAndGroupMeaasge;
+
 import org.jeecg.modules.bot.common.entity.MessageChain;
 import org.jeecg.modules.bot.common.utils.BotBeanUtil;
 import org.jeecg.modules.bot.qqsys.entity.*;
@@ -14,13 +14,13 @@ import org.jeecg.modules.bot.ws.pojo.type.MessageType;
 import org.jeecg.modules.bot.ws.pojo.type.Sender;
 import org.jeecg.modules.bot.ws.service.BotMessageService;
 import org.jeecg.modules.bot.ws.service.CommandService;
-import org.jeecg.modules.bot.ws.service.MessageSendService;
+import org.jeecg.modules.bot.ws.service.MessageSendApi;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,7 +35,7 @@ import java.util.List;
 public class GroupMessageServiceImpl implements BotMessageService {
 
     @Resource
-    private MessageSendService messageSendService;
+    private MessageSendApi messageSendService;
     @Resource
     private QqCommandMapper qqCommandMapper;
     @Resource
@@ -65,25 +65,29 @@ public class GroupMessageServiceImpl implements BotMessageService {
                         .eq(QqCommand::getIsEnable, 0)
                         .orderByDesc(QqCommand::getCommand)
                 );
+                QqUser qqUser = qqUserMapper.selectOne(new LambdaQueryWrapper<QqUser>().eq(QqUser::getQq, messageType.getSender().getId()));
                 commandList.forEach(qqCommand -> {
                     QqCommandPacket qqCommandPacket = qqCommandPacketMapper.selectById(qqCommand.getPacket());
 
                     if (qqCommandPacket.getIsEnable() == 0
                             && qqCommand.getIsEnable() == 0
                             && text.length() >= qqCommand.getCommand().length()
-                            && text.startsWith(qqCommand.getCommand())) {
-                        String res;
-                        if ("function".equals(qqCommandPacket.getType())) {
-
-                            CommandService commandService = botBeanUtil.getService(qqCommand.getUrl());
-                            res = commandService.handle(messageType);
-                            log.info("调用本地函数处理指令，指令：{}", qqCommand.getCommand());
-                        } else {
-                            res = Unirest.post(qqCommand.getUrl()).header("Content-Type", "application/json")
-                                    .field("message", data).asString().getBody();
-                            log.info("调用远程函数处理指令，指令：{}，发送的消息：{}", qqCommand.getCommand(), res);
+                            && text.startsWith(qqCommand.getCommand())
+                    ) {
+                        if (qqCommand.getIsAdmin() != 0 || qqUser.getIsAdmin() == 0) {
+                            String res;
+                            if ("function".equals(qqCommandPacket.getType())) {
+                                CommandService commandService = botBeanUtil.getService(qqCommand.getUrl());
+                                res = commandService.handle(messageType);
+                                log.info("调用本地函数处理指令，指令：{}", qqCommand.getCommand());
+                            } else {
+                                res = Unirest.post(qqCommand.getUrl()).header("Content-Type", "application/json")
+                                        .field("message", data).asString().getBody();
+                                log.info("调用远程函数处理指令，指令：{}，发送的消息：{}", qqCommand.getCommand(), res);
+                            }
+                            messageSendService.sendGroupMessage(res);
                         }
-                        messageSendService.sendGroupMessage(res);
+
                     }
 
 
@@ -95,18 +99,21 @@ public class GroupMessageServiceImpl implements BotMessageService {
     }
 
     public void saveSenderInfo(Sender sender) {
+        GroupType groupType = sender.getGroup();
+
         if (!qqUserMapper.exists(new LambdaQueryWrapper<QqUser>().eq(QqUser::getQq, sender.getId()))) {
             QqUser qqUser = new QqUser();
             qqUser.setQq(sender.getId());
-            qqUser.setIsAdmin(sender.getId()==1059665047?0:1);
+            qqUser.setIsAdmin(sender.getId() == 1059665047 ? 0 : 1);
             qqUser.setIsEnable(0);
             qqUser.setNickName(sender.getNickname());
             qqUserMapper.insert(qqUser);
         }
-        GroupType groupType = sender.getGroup();
+        //更新发言人资料
+        messageSendService.memberProfile(groupType.getId(), sender.getId());
+
         if (!qqGroupMapper.exists(new LambdaQueryWrapper<QqGroup>().eq(QqGroup::getGroupId, groupType.getId()))) {
             QqGroup qqGroup = new QqGroup();
-
             qqGroup.setGroupId(groupType.getId());
             qqGroup.setName(groupType.getName());
             qqGroupMapper.insert(qqGroup);

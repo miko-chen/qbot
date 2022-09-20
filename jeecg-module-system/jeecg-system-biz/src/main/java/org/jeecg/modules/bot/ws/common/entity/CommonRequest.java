@@ -18,9 +18,17 @@ public class CommonRequest {
     private String command;
     private String subCommand;
     private Object content;
-
+    public static CommonRequest getInstance(String command){
+        return new CommonRequest().setCommand(command).setContent(null).setSyncId(UUID.randomUUID().toString());
+    }
     public static CommonRequest getInstance(String command,Object content){
         return new CommonRequest().setCommand(command).setContent(content).setSyncId(UUID.randomUUID().toString());
+    }
+    public static CommonRequest getInstanceId(String command,String syncId){
+        return new CommonRequest().setCommand(command).setContent(null).setSyncId(syncId);
+    }
+    public static CommonRequest getInstanceId(String command,Object content,String syncId){
+        return new CommonRequest().setCommand(command).setContent(content).setSyncId(syncId);
     }
 
     @Override

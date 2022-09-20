@@ -6,7 +6,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.jeecg.modules.bot.ws.common.entity.CommonRequest;
-import org.jeecg.modules.bot.ws.service.MessageSendService;
+import org.jeecg.modules.bot.ws.service.MessageSendApi;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,7 +26,7 @@ public class WsController {
     @Resource(name="botWebSocket")
     private WebSocketClient botWebSocket;
     @Resource
-    private MessageSendService messageSendService;
+    private MessageSendApi messageSendService;
 
     @ApiOperation("重连ws")
     @RequestMapping("/reconnect")

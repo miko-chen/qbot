@@ -7,7 +7,7 @@ import org.jeecg.modules.bot.common.entity.*;
  * @version 0.1
  * @date 2022/9/12 21:29
  */
-public interface MessageSendService {
+public interface MessageSendApi {
     /**
      * 根据消息id获取消息
      * */
@@ -37,4 +37,36 @@ public interface MessageSendService {
      * 发送戳一戳消息
      * */
     void roamingMessages(RoamingMessages roamingMessages);
+
+
+
+    /**
+     * 好友列表
+     * */
+    void friendList();
+    /**
+     * 群列表
+     * */
+    void groupList();
+    /**
+     * 群成员列表
+     * */
+    void memberList(Long target);
+    /**
+     * 好友信息
+     * */
+    void friendProfile(Long target);
+    /**
+     * 用户信息
+     * */
+    void userProfile(Long target);
+    /**
+     * 群成员信息
+     * */
+    void memberProfile(Long target,Long memberId);
+    /**
+     * 机器人信息
+     * */
+    void botProfile();
+
 }

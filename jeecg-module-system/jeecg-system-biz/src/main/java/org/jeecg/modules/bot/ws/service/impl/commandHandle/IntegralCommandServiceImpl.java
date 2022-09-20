@@ -1,5 +1,7 @@
 package org.jeecg.modules.bot.ws.service.impl.commandHandle;
 
+import cn.hutool.core.math.MathUtil;
+import com.aliyuncs.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -59,13 +61,16 @@ public class IntegralCommandServiceImpl implements CommandService {
             } else {
                 QqUser qqUser = qqUserMapper.selectOne(new LambdaQueryWrapper<QqUser>().eq(QqUser::getQq,data.getSender().getId()));
                 //需要设置为管理员才可以
-                if (qqUser.getIsAdmin() == 0) {
+                if (qqUser.getIsAdmin() == 0
+//                        || "ADMINISTRATOR".equals(data.getSender().getPermission())
+                        || "OWNER".equals(data.getSender().getPermission())) {
                     LambdaQueryWrapper<QqUserGroup> queryWrapper = new LambdaQueryWrapper<QqUserGroup>()
                             .eq(QqUserGroup::getGroupId, data.getSender().getGroup().getId());
                     Long qq =  strArray.length==3?qqUser.getQq():Long.parseLong(strArray[3]);
                     queryWrapper.eq(QqUserGroup::getQq, qq);
                     list.add(new MessageChain().plain("["+qq+"]"));
                     QqUserGroup qqUserGroup = qqUserGroupMapper.selectOne(queryWrapper);
+
                     if ("add".equals(strArray[1])) {
                         qqUserGroup.setIntegral(qqUserGroup.getIntegral() + Integer.parseInt(strArray[2]));
                         list.add(new MessageChain().plain("新增积分"));
